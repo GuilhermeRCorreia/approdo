@@ -41,11 +41,11 @@ export default function Tabela() {
 
   if (isLoading)
     return (
-      <div className="flex flex-col space-y-5 items-center justify-center min-h-screen">
+      <div className="flex flex-col space-y-5 items-center justify-center h-full w-full">
         <div className="flex">
           <Skeleton className="h-4 w-[950px]" />{" "}
         </div>
-        <Skeleton className="h-[600px] w-full max-w-screen-xl rounded-xl" />
+        <Skeleton className="h-full w-full rounded-xl" />
         <div className="flex justify-between">
           <Skeleton className="h-4 w-[950px]" />{" "}
         </div>
@@ -54,7 +54,7 @@ export default function Tabela() {
   if (error) return <div>Error: {error.message}</div>;
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center w-full mx-10 space-y-3 ">
+    <div className="h-full flex flex-col items-center justify-center w-full space-y-3">
       <Toolbar tableInstance={table} onFilterChange={handleFilterChange} />
       <DataTable
         columns={columns}

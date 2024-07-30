@@ -1,15 +1,18 @@
+import { PreNotaChart } from "@/components/2.listNotas/graphs/PreNotaChart";
 import Tabela from "@/components/2.listNotas/tabela/tabela";
 import React from "react";
 
-const page = () => {
+const Page = () => {
   return (
-    <div className="flex flex-col justify-center items center h-screen">
-      <div className="w-full h-1/3"></div>
-      <div className="flex-1 w-[93vw]">
+    <div className="mx-10 w-[90vw] h-[100vh] flex flex-col">
+      <div className="flex-shrink-0 h-[25vh] w-full">
+        <PreNotaChart />
+      </div>
+      <div className="flex-grow h-[75vh] w-full">
         <Tabela />
       </div>
     </div>
   );
 };
 
-export default page;
+export default Page;

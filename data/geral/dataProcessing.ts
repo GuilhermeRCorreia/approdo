@@ -1,128 +1,72 @@
-import { fetchPreNotaData } from "./apiRequests";
+import axios from "axios";
 
-export const fetchStatusCounts = async () => {
-  const data = await fetchPreNotaData();
-  const now = new Date();
-  const currentMonth = now.getMonth() + 1;
-  const currentYear = now.getFullYear();
-
-  let aClassificarCount = 0;
-  let classificadaCount = 0;
-  let revisarCount = 0;
-
-  data.forEach(
-    (item: { F1_DTDIGIT: string; F1_STATUS: string; F1_XREV: string }) => {
-      const dataDigitacao = item.F1_DTDIGIT;
-      const ano = parseInt(dataDigitacao.substring(0, 4), 10);
-      const mes = parseInt(dataDigitacao.substring(4, 6), 10);
-
-      if (ano === currentYear && mes === currentMonth) {
-        const status = item.F1_STATUS.trim();
-        const xRev = item.F1_XREV.trim();
-
-        if (status && /[a-zA-Z]/.test(status)) {
-          classificadaCount++;
-        } else if (xRev && /[a-zA-Z]/.test(xRev)) {
-          revisarCount++;
-        } else {
-          aClassificarCount++;
-        }
-      }
-    }
-  );
-
-  return {
-    aClassificar: aClassificarCount,
-    classificada: classificadaCount,
-    revisar: revisarCount,
+export const fetchPreNotaData = async () => {
+  const config = {
+    method: "get",
+    maxBodyLength: Infinity,
+    url: "http://172.16.99.174:8400/rest/PreNota/ListaPreNota?pag=1&numItem=999999",
   };
-};
 
-export const fetchMonthlySumF1ValBrut = async () => {
-  const data = await fetchPreNotaData();
-  const now = new Date();
-  const currentMonth = now.getMonth() + 1;
-  const currentYear = now.getFullYear();
-
-  const monthlySum = Array(6)
-    .fill(0)
-    .map((_, i) => {
-      const date = new Date();
-      date.setMonth(currentMonth - i - 1);
-      return {
-        month: date.toLocaleString("default", { month: "short" }),
-        sum: 0,
-      };
-    });
-
-  data.forEach((item: { F1_VALBRUT: string; F1_DTDIGIT: string }) => {
-    const valor = parseFloat(item.F1_VALBRUT.replace(",", "."));
-    const dataDigitacao = item.F1_DTDIGIT;
-    const ano = parseInt(dataDigitacao.substring(0, 4), 10);
-    const mes = parseInt(dataDigitacao.substring(4, 6), 10);
-
-    const monthIndex = currentMonth - mes - 1;
-    if (ano === currentYear && monthIndex < 6 && monthIndex >= 0) {
-      monthlySum[monthIndex].sum += isNaN(valor) ? 0 : valor;
-    }
-  });
-
-  // Format the sum values for each month
-  monthlySum.forEach(item => {
-    item.sum = parseFloat(item.sum.toFixed(2));
-  });
-
-  return monthlySum.filter((item) => item.sum > 0).map(item => ({
-    ...item,
-    formattedSum: item.sum.toLocaleString("pt-BR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-      useGrouping: true,
-    })
-  }));
+  try {
+    const response = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
 };
 
 export const getTipoData = async () => {
   const data = await fetchPreNotaData();
   const now = new Date();
-  const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
 
-  const tipoData = {
-    despesa: 0,
-    revenda: 0,
-    materiaPrima: 0,
-    collection: 0,
-    outros: 0,
-  };
+  const tipoData = new Map();
 
-  data.forEach((item: { F1_DTDIGIT: string; F1_XTIPO: string }) => {
+  data.forEach((item) => {
     const dataDigitacao = item.F1_DTDIGIT;
     const tipo = item.F1_XTIPO.trim();
     const ano = parseInt(dataDigitacao.substring(0, 4), 10);
     const mes = parseInt(dataDigitacao.substring(4, 6), 10);
+    const dia = parseInt(dataDigitacao.substring(6, 8), 10);
 
     if (ano === currentYear) {
+      const dateKey = `${ano}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+      if (!tipoData.has(dateKey)) {
+        tipoData.set(dateKey, { date: dateKey, despesa: 0, revenda: 0, materiaPrima: 0, collection: 0 });
+      }
+      const dataEntry = tipoData.get(dateKey);
       switch (tipo) {
         case "Despesa/Imobilizado":
-          tipoData.despesa++;
+          dataEntry.despesa++;
           break;
         case "Revenda":
-          tipoData.revenda++;
+          dataEntry.revenda++;
           break;
         case "Materia Prima":
-          tipoData.materiaPrima++;
+          dataEntry.materiaPrima++;
           break;
         case "Collection":
-          tipoData.collection++;
-          break;
-        default:
-          console.log(`${item.F1_XTIPO}`);
-          tipoData.outros++;
+          dataEntry.collection++;
           break;
       }
+      tipoData.set(dateKey, dataEntry);
     }
   });
 
-  return tipoData;
+  // Preencher valores zerados para todas as datas no intervalo
+  const allDates = Array.from(tipoData.keys());
+  const startDate = new Date(allDates[0]);
+  const endDate = new Date(allDates[allDates.length - 1]);
+  const currentDate = new Date(startDate);
+
+  while (currentDate <= endDate) {
+    const dateKey = currentDate.toISOString().split("T")[0];
+    if (!tipoData.has(dateKey)) {
+      tipoData.set(dateKey, { date: dateKey, despesa: 0, revenda: 0, materiaPrima: 0, collection: 0 });
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return Array.from(tipoData.values());
 };

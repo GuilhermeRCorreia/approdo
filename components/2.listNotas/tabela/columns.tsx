@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/hover-card";
 
 import { Badge } from "@/components/ui/badge";
+import { CheckCheck, Clock, MessageSquareQuote } from "lucide-react";
 export type PreNota = {
   F1_FILIAL: string;
   F1_DOC: string;
@@ -47,6 +48,50 @@ export const usePreNotas = () => {
 };
 
 export const columns: ColumnDef<PreNota>[] = [
+  {
+    accessorKey: "F1_STATUS",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.original.F1_STATUS;
+      const xRev = row.original.F1_XREV;
+
+      if (status && /[a-zA-Z]/.test(status)) {
+        return (
+          <HoverCard>
+            <HoverCardTrigger>
+              <span className="truncate text-lime-500"><CheckCheck /></span>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-fit">
+              <p>Classificada</p>
+            </HoverCardContent>
+          </HoverCard>
+        );
+      } else if (xRev && /[a-zA-Z]/.test(xRev)) {
+        return (
+          <HoverCard>
+            <HoverCardTrigger>
+              <span className="truncate text-red-500"><MessageSquareQuote /></span>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-fit">
+              <p>Revisar</p>
+            </HoverCardContent>
+          </HoverCard>
+        );
+      } else {
+        return (
+          <HoverCard>
+            <HoverCardTrigger>
+              <span className="truncate text-amber-500"><Clock /></span>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-fit">
+              <p>A Classificar</p>
+            </HoverCardContent>
+          </HoverCard>
+        );
+      }
+    },
+    id: "Status",
+  },
   {
     accessorKey: "F1_FILIAL",
     header: "Filial",
@@ -112,84 +157,42 @@ export const columns: ColumnDef<PreNota>[] = [
     id: "Valor",
   },
   {
-    accessorKey: "F1_EMISSAO",
-    header: "Emissão",
-    cell: (info) => {
-      const rawDate = info.getValue() as string; // Assume que o valor é uma string
-      // Formatar a data como YYYY-MM-DD
-      const formattedDate = `${rawDate.substring(0, 4)}-${rawDate.substring(
-        4,
-        6
-      )}-${rawDate.substring(6, 8)}`;
-
-      try {
-        const date = parse(formattedDate, "yyyy-MM-dd", new Date());
-        return format(date, "dd/MM/yyyy");
-      } catch (e) {
-        return "Data inválida"; // Retorno em caso de erro no parsing
-      }
-    },
-    id: "Emissão",
-  },
-  {
     accessorKey: "F1_DTDIGIT",
-    header: "Inclusão",
-    cell: (info) => {
-      const rawDate = info.getValue() as string; // Assume que o valor é uma string
-      // Formatar a data como YYYY-MM-DD
-      const formattedDate = `${rawDate.substring(0, 4)}-${rawDate.substring(
-        4,
-        6
-      )}-${rawDate.substring(6, 8)}`;
+    header: "Datas",
+    cell: ({ row }) => {
+      const rawDateInclusion = row.original.F1_DTDIGIT;
+      const rawDateEmission = row.original.F1_EMISSAO;
+      const rawDateDue = row.original.VENCIMENTO;
 
+      const formattedDateInclusion = `${rawDateInclusion.substring(0, 4)}-${rawDateInclusion.substring(4, 6)}-${rawDateInclusion.substring(6, 8)}`;
+      const formattedDateEmission = `${rawDateEmission.substring(0, 4)}-${rawDateEmission.substring(4, 6)}-${rawDateEmission.substring(6, 8)}`;
+      const formattedDateDue = `${rawDateDue.substring(0, 4)}-${rawDateDue.substring(4, 6)}-${rawDateDue.substring(6, 8)}`;
+
+      let inclusionDate, emissionDate, dueDate;
       try {
-        const date = parse(formattedDate, "yyyy-MM-dd", new Date());
-        return format(date, "dd/MM/yyyy");
+        inclusionDate = format(parse(formattedDateInclusion, "yyyy-MM-dd", new Date()), "dd/MM/yyyy");
+        emissionDate = format(parse(formattedDateEmission, "yyyy-MM-dd", new Date()), "dd/MM/yyyy");
+        dueDate = format(parse(formattedDateDue, "yyyy-MM-dd", new Date()), "dd/MM/yyyy");
       } catch (e) {
-        return "Data inválida"; // Retorno em caso de erro no parsing
+        inclusionDate = "Data inválida";
+        emissionDate = "Data inválida";
+        dueDate = "Data inválida";
       }
-    },
-    id: "Inclusão",
-  },
-  {
-    accessorKey: "VENCIMENTO",
-    header: "Vencimento",
-    cell: (info) => {
-      const rawDate = info.getValue() as string; // Assume que o valor é uma string
-      // Formatar a data como YYYY-MM-DD
-      const formattedDate = `${rawDate.substring(0, 4)}-${rawDate.substring(
-        4,
-        6
-      )}-${rawDate.substring(6, 8)}`;
 
-      try {
-        const date = parse(formattedDate, "yyyy-MM-dd", new Date());
-        return format(date, "dd/MM/yyyy");
-      } catch (e) {
-        return "Data inválida"; // Retorno em caso de erro no parsing
-      }
+      return (
+        <HoverCard>
+          <HoverCardTrigger>
+            <span>{inclusionDate}</span>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-fit">
+            <p>Inclusão: {inclusionDate}</p>
+            <p>Emissão: {emissionDate}</p>
+            <p>Vencimento: {dueDate}</p>
+          </HoverCardContent>
+        </HoverCard>
+      );
     },
-    id: "Vencimento",
-  },
-  {
-    accessorKey: "F1_STATUS",
-    header: "Status",
-    cell: (info) => {
-      const status = info.row.original.F1_STATUS;
-      const xRev = info.row.original.F1_XREV;
-
-      // Verifica se há pelo menos uma letra em `F1_STATUS`
-      if (status && /[a-zA-Z]/.test(status)) {
-        return <span className="truncate">Classificada</span>;
-      }
-      // Verifica se há pelo menos uma letra em `F1_XREV`
-      else if (xRev && /[a-zA-Z]/.test(xRev)) {
-        return <span className="truncate">Revisar</span>;
-      } else {
-        return <span className="truncate">A Classificar</span>;
-      }
-    },
-    id: "Status",
+    id: "Datas",
   },
 
   {
@@ -222,7 +225,7 @@ export const columns: ColumnDef<PreNota>[] = [
       const priority = (info.getValue() ?? "").toString().trim().toLowerCase();
       // Renderização da célula com estilização apropriada
       return (
-        <Badge variant={priority}>
+        <Badge variant={priority.charAt(0).toUpperCase() + priority.slice(1)}>
           {priority.charAt(0).toUpperCase() + priority.slice(1)}
         </Badge>
       );
