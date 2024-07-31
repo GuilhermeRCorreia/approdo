@@ -51,7 +51,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function PreNotaChart() {
+export function TipeChart() {
   const [data, setData] = useState([]);
   const [timeRange, setTimeRange] = useState("90d");
   const [loading, setLoading] = useState(true);
@@ -84,7 +84,7 @@ export function PreNotaChart() {
       <CardHeader className="absolute flex items-center gap-2 space-y-0 p-4 top-0 left-0 right-0 z-10 bg-opacity-75">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
           <div className="grid flex-1 gap-1 text-center sm:text-left">
-            <CardTitle>Tipos de NF</CardTitle>
+            <CardTitle>PreNota Data Chart</CardTitle>
             <CardDescription>
               Visualização de dados de pré-notas por tipo
             </CardDescription>

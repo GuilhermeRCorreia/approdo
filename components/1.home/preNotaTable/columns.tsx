@@ -1,9 +1,20 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { format, parse } from "date-fns";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenuActions } from "./dropMenu";
-import { CheckCheck, Clock, Flag, MessageSquareQuote } from "lucide-react";
+import {
+  CheckCheck,
+  Clock,
+  MessageSquareQuote,
+  SignalHigh,
+  SignalLow,
+  SignalMedium,
+} from "lucide-react";
 import SearchPopover from "./SearchPopover";
 
 export interface PreNota {
@@ -22,48 +33,50 @@ export interface PreNota {
   F1_XPRIOR: string;
 }
 
-export const columns = (onSearch: (query: string) => void): ColumnDef<PreNota>[] => [
+export const columns = (
+  onSearch: (query: string) => void
+): ColumnDef<PreNota>[] => [
   {
     accessorKey: "F1_STATUS",
     header: "Status",
     cell: ({ row }) => {
       const status = row.original.F1_STATUS;
       const xRev = row.original.F1_XREV;
+      let statusContent, statusClass;
 
-      if (status && /[a-zA-Z]/.test(status)) {
-        return (
-          <HoverCard>
-            <HoverCardTrigger>
-              <span className="truncate text-lime-500"><CheckCheck /></span>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-fit">
-              <p>Classificada</p>
-            </HoverCardContent>
-          </HoverCard>
-        );
-      } else if (xRev && /[a-zA-Z]/.test(xRev)) {
-        return (
-          <HoverCard>
-            <HoverCardTrigger>
-              <span className="truncate text-red-500"><MessageSquareQuote /></span>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-fit">
-              <p>Revisar</p>
-            </HoverCardContent>
-          </HoverCard>
-        );
-      } else {
-        return (
-          <HoverCard>
-            <HoverCardTrigger>
-              <span className="truncate text-amber-500"><Clock /></span>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-fit">
-              <p>A Classificar</p>
-            </HoverCardContent>
-          </HoverCard>
-        );
+      switch (true) {
+        case status && /[a-zA-Z]/.test(status):
+          statusContent = "Classificada";
+          statusClass = "text-lime-500";
+          break;
+        case xRev && /[a-zA-Z]/.test(xRev):
+          statusContent = "Revisar";
+          statusClass = "text-red-500";
+          break;
+        default:
+          statusContent = "A Classificar";
+          statusClass = "text-amber-500";
+          break;
       }
+
+      return (
+        <HoverCard>
+          <HoverCardTrigger>
+            <span className={`truncate ${statusClass}`}>
+              {statusContent === "Classificada" ? (
+                <CheckCheck />
+              ) : statusContent === "Revisar" ? (
+                <MessageSquareQuote />
+              ) : (
+                <Clock />
+              )}
+            </span>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-fit">
+            <p>{statusContent}</p>
+          </HoverCardContent>
+        </HoverCard>
+      );
     },
     id: "Status",
   },
@@ -138,15 +151,36 @@ export const columns = (onSearch: (query: string) => void): ColumnDef<PreNota>[]
       const rawDateEmission = row.original.F1_EMISSAO;
       const rawDateDue = row.original.VENCIMENTO;
 
-      const formattedDateInclusion = `${rawDateInclusion.substring(0, 4)}-${rawDateInclusion.substring(4, 6)}-${rawDateInclusion.substring(6, 8)}`;
-      const formattedDateEmission = `${rawDateEmission.substring(0, 4)}-${rawDateEmission.substring(4, 6)}-${rawDateEmission.substring(6, 8)}`;
-      const formattedDateDue = `${rawDateDue.substring(0, 4)}-${rawDateDue.substring(4, 6)}-${rawDateDue.substring(6, 8)}`;
+      const formattedDateInclusion = `${rawDateInclusion.substring(
+        0,
+        4
+      )}-${rawDateInclusion.substring(4, 6)}-${rawDateInclusion.substring(
+        6,
+        8
+      )}`;
+      const formattedDateEmission = `${rawDateEmission.substring(
+        0,
+        4
+      )}-${rawDateEmission.substring(4, 6)}-${rawDateEmission.substring(6, 8)}`;
+      const formattedDateDue = `${rawDateDue.substring(
+        0,
+        4
+      )}-${rawDateDue.substring(4, 6)}-${rawDateDue.substring(6, 8)}`;
 
       let inclusionDate, emissionDate, dueDate;
       try {
-        inclusionDate = format(parse(formattedDateInclusion, "yyyy-MM-dd", new Date()), "dd/MM/yyyy");
-        emissionDate = format(parse(formattedDateEmission, "yyyy-MM-dd", new Date()), "dd/MM/yyyy");
-        dueDate = format(parse(formattedDateDue, "yyyy-MM-dd", new Date()), "dd/MM/yyyy");
+        inclusionDate = format(
+          parse(formattedDateInclusion, "yyyy-MM-dd", new Date()),
+          "dd/MM/yyyy"
+        );
+        emissionDate = format(
+          parse(formattedDateEmission, "yyyy-MM-dd", new Date()),
+          "dd/MM/yyyy"
+        );
+        dueDate = format(
+          parse(formattedDateDue, "yyyy-MM-dd", new Date()),
+          "dd/MM/yyyy"
+        );
       } catch (e) {
         inclusionDate = "Data inválida";
         emissionDate = "Data inválida";
@@ -168,7 +202,48 @@ export const columns = (onSearch: (query: string) => void): ColumnDef<PreNota>[]
     },
     id: "Datas",
   },
+  {
+    accessorKey: "F1_XPRIOR",
+    header: "Prioridade",
+    cell: ({ row }) => {
+      const priority = row.original.F1_XPRIOR.toLowerCase().trim();
+      let IconComponent;
+      let iconClass;
 
+      switch (priority) {
+        case "alta":
+          IconComponent = SignalHigh;
+          iconClass = "text-red-600 h-7";
+          break;
+        case "media":
+          IconComponent = SignalMedium;
+          iconClass = "text-amber-600 h-7";
+          break;
+        case "baixa":
+          IconComponent = SignalLow;
+          iconClass = "text-lime-600 h-7";
+          break;
+        default:
+          IconComponent = SignalLow;
+          iconClass = "text-gray-600 h-9"; // Ícone padrão se necessário
+          break;
+      }
+
+      return (
+        <div className="flex justify-center items-center">
+          <HoverCard>
+            <HoverCardTrigger>
+              <IconComponent className={iconClass} />
+            </HoverCardTrigger>
+            <HoverCardContent className="w-fit h-fit">
+              {row.original.F1_XPRIOR}
+            </HoverCardContent>
+          </HoverCard>
+        </div>
+      );
+    },
+    id: "Prioridade",
+  },
   {
     accessorKey: "F1_XOBS",
     header: "Observação",
@@ -189,19 +264,7 @@ export const columns = (onSearch: (query: string) => void): ColumnDef<PreNota>[]
     },
     id: "Observação",
   },
-  {
-    accessorKey: "F1_XPRIOR",
-    header: "Prioridade",
-    cell: ({ getValue }) => {
-      const priority = (getValue() ?? "").toString().trim().toLowerCase();
-      return (
-        <Badge variant={priority}>
-          {priority.charAt(0).toUpperCase() + priority.slice(1)}
-        </Badge>
-      );
-    },
-    id: "Prioridade",
-  },
+
   {
     id: "actions",
     header: <SearchPopover onSearch={onSearch} />,
